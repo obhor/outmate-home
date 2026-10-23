@@ -96,6 +96,93 @@ Long-running work (research, chat, enrichment, cell runs, imports) returns a job
 
 ---
 
+## Data enrichment (build this first)
+
+The 12 enrichment types in the UI are **catalog rows, not endpoints**. Home's "Build an enrichment", Workspace's "Add column" + "Run cells", and Copilot's enrich menu all call the same run endpoint.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/enrichments/catalog` | id, name, description, cost, output type, source |
+| `POST` | `/enrichments/runs` | create a run (the core endpoint) |
+| `GET` | `/enrichments/runs/:runId` | per-cell values, sources, errors |
+| `GET` | `/jobs/:jobId` + `/events` | progress, SSE |
+| `POST` | `/jobs/:jobId/cancel` | stop; refund uncharged cells |
+
+`POST /enrichments/runs`:
+
+```json
+{
+  "target": { "sheetId": "sh_companies", "rowIds": ["row_1", "row_2"] },
+  "columns": [
+    {
+      "key": "funding",
+      "label": "Funding Stage",
+      "type": "badge",
+      "enrichmentId": "find_funding",
+      "prompt": "Find the company's latest funding stage."
+    }
+  ]
+}
+```
+
+→ `202 { "runId": "enr_…", "jobId": "job_…", "estimatedCredits": 6, "status": "queued" }`
+
+`GET /enrichments/runs/:runId` returns one entry per row × column:
+
+```json
+{
+  "id": "enr_…",
+  "jobId": "job_…",
+  "sheetId": "sh_companies",
+  "status": "succeeded",
+  "estimatedCredits": 6,
+  "chargedCredits": 6,
+  "cells": [
+    {
+      "rowId": "row_1",
+      "columnKey": "funding",
+      "enrichmentId": "find_funding",
+      "status": "succeeded",
+      "value": "Series B — $28M led by Redpoint",
+      "source": "crunchbase",
+      "confidence": 0.91,
+      "fetchedAt": "2026-10-22T06:01:11Z",
+      "cost": 3,
+      "error": null
+    }
+  ]
+}
+```
+
+Rules:
+
+- One run can cover several columns; cost is `sum(column.cost) × rows`, charged per completed cell.
+- Partial provider failures are per cell (`status: "failed"`, `cost: 0`, `error`); the job still ends `succeeded` if any cell succeeded. Only an all-failed run ends `failed`.
+- Honor `Idempotency-Key`; replaying the same key returns the original run.
+- Results are cached/reused by `(company, enrichment, prompt hash)` unless an explicit refresh is requested. Not implemented in the reference server yet.
+
+### Reference implementation
+
+`server/mock-api.mjs` implements this slice (in-memory state, simulated providers, no auth) and `server/mock-api.test.mjs` covers the lifecycle.
+
+```bash
+npm run api        # http://127.0.0.1:4200/api/v1
+npm run test:api   # catalog, run, partial failure, cancel, idempotency, validation
+```
+
+```bash
+curl -s localhost:4200/api/v1/enrichments/catalog
+curl -s -X POST localhost:4200/api/v1/enrichments/runs \
+  -H 'content-type: application/json' \
+  -H 'idempotency-key: demo-1' \
+  -d '{"target":{"sheetId":"sh_companies","rowIds":["row_1","row_2"]},"columns":[{"key":"funding","enrichmentId":"find_funding"}]}'
+curl -N localhost:4200/api/v1/jobs/<jobId>/events
+```
+
+The server is a reference, not production: it ignores auth, keeps state in memory, and simulates every provider. Keep the shapes; replace the internals.
+
+---
+
 ## Home
 
 | Method | Path | Purpose |
@@ -114,7 +201,7 @@ Long-running work (research, chat, enrichment, cell runs, imports) returns a job
 | `PATCH` | `/lists/:id` | rename / update |
 | `DELETE` | `/lists/:id` | delete |
 | `GET` | `/enrichments/catalog` | enrichment drawer options + credit cost |
-| `POST` | `/projects/:id/columns` | create an AI enrichment column |
+| `POST` | `/projects/:id/columns` | persist an AI column, then start `POST /enrichments/runs` |
 
 `POST /projects` body (composer):
 
@@ -352,7 +439,7 @@ The UI stores column visibility locally (`hidden`), so `hidden` is a comma-separ
 | `GET` | `/workspace/projects/:id/sheets` | sheet tabs + row counts |
 | `GET` | `/workspace/sheets/:id/rows?query=&filter=&sort=&hidden=&cursor=` | active sheet |
 | `PATCH` | `/workspace/sheets/:id/rows/:rowId` | inline cell edit `{ "cells": { "crm": "HubSpot" } }` |
-| `POST` | `/workspace/sheets/:id/columns` | Add-column drawer (AI column) |
+| `POST` | `/workspace/sheets/:id/columns` | persist the column, then start `POST /enrichments/runs` |
 | `PATCH` | `/workspace/sheets/:id/columns` | reorder / hide `{ "order": [...], "hidden": [...] }` |
 | `POST` | `/workspace/sheets/:id/rows/run` | Run rows / Run cells → job |
 | `POST` | `/workspace/sheets/:id/imports` | multipart CSV import → job |
