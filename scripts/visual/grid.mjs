@@ -184,6 +184,86 @@ try {
       await wait(100)
       out.readOnlyPasteSkipped = cell('Acme|company').getAttribute('data-text') === 'Acme'
 
+      const tab = (name) => document.querySelector('[data-sheet-tab="' + name + '"]')
+      const press = async (el) => {
+        fire(el, 'mousedown')
+        window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
+        await wait(60)
+      }
+      const firstCell = (sheet, key) =>
+        [...document.querySelectorAll('[data-sheet="' + sheet + '"] [role="gridcell"]')].find(
+          (el) => el.getAttribute('data-cell').endsWith('|' + key),
+        )
+
+      tab('Leaders').dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+      await wait(120)
+      const leaderGrid = document.querySelector('[data-sheet="leaders"]')
+      out.leadersGrid = !!leaderGrid && leaderGrid.getAttribute('role') === 'grid'
+      const leaderPerson = firstCell('leaders', 'person')
+      await press(leaderPerson)
+      out.leadersActive = leaderGrid.getAttribute('aria-activedescendant') === leaderPerson.id
+      key(leaderGrid, 'ArrowRight')
+      await wait(60)
+      out.leadersArrow =
+        leaderGrid.getAttribute('aria-activedescendant') === firstCell('leaders', 'title').id
+
+      await press(leaderPerson)
+      key(leaderGrid, 'ArrowDown', { shiftKey: true })
+      await wait(60)
+      const secondLeader = [
+        ...document.querySelectorAll('[data-sheet="leaders"] [data-cell$="|person"]'),
+      ][1]
+      out.leadersRange =
+        leaderPerson.getAttribute('aria-selected') === 'true' &&
+        secondLeader.getAttribute('aria-selected') === 'true'
+
+      key(leaderGrid, 'c', { ctrlKey: true })
+      await wait(200)
+      try {
+        out.leadersCopy =
+          (await navigator.clipboard.readText()) ===
+          leaderPerson.getAttribute('data-text') + '\\n' + secondLeader.getAttribute('data-text')
+      } catch {
+        out.leadersCopy = false
+      }
+
+      const leaderHead = [
+        ...document.querySelectorAll('[data-sheet="leaders"] [role="columnheader"]'),
+      ].find((h) => h.textContent.includes('Person'))
+      const beforeLeaderWidth = leaderHead.getBoundingClientRect().width
+      const leaderRect = leaderHead.getBoundingClientRect()
+      leaderHead.querySelector('.cursor-col-resize').dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, cancelable: true, clientX: leaderRect.right }),
+      )
+      window.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: leaderRect.right + 50 }),
+      )
+      window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
+      await wait(120)
+      out.leadersResize = leaderHead.getBoundingClientRect().width >= beforeLeaderWidth + 30
+
+      tab('Signals').dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+      await wait(120)
+      const signalGrid = document.querySelector('[data-sheet="signals"]')
+      out.signalsGrid = !!signalGrid && signalGrid.getAttribute('role') === 'grid'
+      const signalCompany = firstCell('signals', 'company')
+      await press(signalCompany)
+      out.signalsActive = signalGrid.getAttribute('aria-activedescendant') === signalCompany.id
+
+      key(signalGrid, 'c', { ctrlKey: true })
+      await wait(200)
+      try {
+        out.signalsCopy =
+          (await navigator.clipboard.readText()) === signalCompany.getAttribute('data-text')
+      } catch {
+        out.signalsCopy = false
+      }
+
+      key(signalGrid, 'ArrowRight')
+      await wait(60)
+      out.signalsArrow =
+        signalGrid.getAttribute('aria-activedescendant') === firstCell('signals', 'type').id
+
       return out
     })()`,
     true,

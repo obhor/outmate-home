@@ -10,7 +10,11 @@ export function SheetTabs({ m }: { m: WorkspaceValues }) {
                         {(sheetTabs ?? []).map((t: any, __i: number) => (
                           <Fragment key={__i}>
                             {'\n              '}
-                            <div onClick={t.pick} style={cssToObj(`${t.style}; position:relative`)}>
+                            <div
+                              data-sheet-tab={t.name}
+                              onClick={t.pick}
+                              style={cssToObj(`${t.style}; position:relative`)}
+                            >
                               {'\n                '}
                               {t.renaming ? (
                                 <>
