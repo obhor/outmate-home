@@ -7,7 +7,11 @@ export function Toast({ m }: { m: WorkspaceValues }) {
   return (
     <>
                 {'\n    '}
-                <div className="absolute bottom-[20px] left-[50%] ml-[-140px] w-[280px] bg-[#18181B] text-[#FFFFFF] rounded-[8px] py-[9px] px-[13px] text-[11.5px] text-center z-[80] [animation:pop_.14s_ease-out]">
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="absolute bottom-[20px] left-[50%] ml-[-140px] w-[280px] bg-[#18181B] text-[#FFFFFF] rounded-[8px] py-[9px] px-[13px] text-[11.5px] text-center z-[80] [animation:pop_.14s_ease-out]"
+                >
                   <span>{toastText}</span>
                 </div>
                 {'\n  '}

@@ -1,5 +1,6 @@
 // @ts-nocheck — logic preserved verbatim from the design export.
 import { ModelBase } from '../../lib/model'
+import { EDITABLE_SOURCE_COLUMNS } from './components/table/gridUtils'
 const C = [
   [
     'Acme',
@@ -684,6 +685,8 @@ class WorkspaceModel extends ModelBase {
     customCols: [],
     cellVals: {},
     cellState: {},
+    cellEdits: {},
+    colWidths: {},
     job: null,
     colMenuFor: null,
     rowMenuFor: null,
@@ -959,6 +962,34 @@ class WorkspaceModel extends ModelBase {
       1700,
     )
   }
+  setColWidth = (key, width) => {
+    this.setState((st) => ({
+      colWidths: Object.assign({}, st.colWidths, {
+        [key]: Math.min(600, Math.max(64, Math.round(width))) + 'px',
+      }),
+    }))
+  }
+  setCellEdits = (entries) => {
+    if (!entries.length) return
+    this.setState((st) => {
+      const next = Object.assign({}, st.cellEdits)
+      entries.forEach(({ row, col, value }) => {
+        const k = col + '|' + row
+        if (value == null || value === '') delete next[k]
+        else next[k] = value
+      })
+      return {
+        cellEdits: next,
+      }
+    })
+    this.flash(entries.length + (entries.length === 1 ? ' cell updated' : ' cells updated'))
+  }
+  noteCopied = (count) => {
+    this.flash('Copied ' + count + (count === 1 ? ' cell' : ' cells'))
+  }
+  noteSkipped = (count) => {
+    this.flash(count + ' read-only cell' + (count === 1 ? '' : 's') + ' skipped')
+  }
   stop = (e) => {
     if (e && e.stopPropagation) e.stopPropagation()
   }
@@ -1010,6 +1041,7 @@ class WorkspaceModel extends ModelBase {
     const cols = baseCols
       .concat(s.customCols.map((cc) => ['cc:' + cc.id, cc.name, '190px', 'custom']))
       .concat([['actions', '', '46px', 'actions']])
+    const widthFor = (c) => s.colWidths[c[0]] || c[2]
     const PRED = {
       'High intent': (c) => c.intent >= 80,
       'Recently funded': (c) => c.signals.some((x) => x[0] === 'Funding'),
@@ -1120,17 +1152,20 @@ class WorkspaceModel extends ModelBase {
           logo: c.logo,
           logoBg: c.logoBg,
         })
-      if (kind === 'link')
+      if (kind === 'link') {
+        const edit = editOf('domain', c)
+        const domain = edit !== undefined ? edit : c.domain
         return Object.assign(b, {
           isLink: true,
-          value: c.domain,
+          value: domain,
           logo: c.logo,
           logoBg: c.logoBg,
           act: (e) => {
             this.stop(e)
-            this.flash('Opening ' + c.domain)
+            this.flash('Opening ' + domain)
           },
         })
+      }
       if (kind === 'linkedin')
         return Object.assign(b, {
           isLinkedIn: true,
@@ -1175,6 +1210,7 @@ class WorkspaceModel extends ModelBase {
       }
       return b
     }
+    const editOf = (key, c) => s.cellEdits[key + '|' + c.name]
     const cellsFor = (c, i) =>
       cols.map((col) => {
         const kind = col[3],
@@ -1267,8 +1303,9 @@ class WorkspaceModel extends ModelBase {
         if (kind === 'custom') {
           const cc = s.customCols.find((x) => 'cc:' + x.id === key),
             k = cc.id + '|' + c.name
-          const v = s.cellVals[k],
-            stt = s.cellState[k]
+          const plain = !!(cc.cost === 0 && cc.badge === 'TXT')
+          const v = plain ? editOf(key, c) : s.cellVals[k],
+            stt = plain ? undefined : s.cellState[k]
           const running = stt === 'running',
             pending = stt === 'pending',
             failed = stt === 'failed',
@@ -1277,6 +1314,7 @@ class WorkspaceModel extends ModelBase {
             busy = !!stt
           return Object.assign(cell('x', c, i), {
             isCustom: true,
+            isPlain: plain,
             running,
             pending,
             failed,
@@ -1287,7 +1325,7 @@ class WorkspaceModel extends ModelBase {
               this.runCell(cc, c)
             },
             hasVal: !busy && v !== undefined,
-            needsRun: !busy && v === undefined,
+            needsRun: !plain && !busy && v === undefined,
             value: v,
             badge: cc.badge,
             cost: cc.cost ? cc.cost + ' cr' : 'Free',
@@ -1404,14 +1442,17 @@ class WorkspaceModel extends ModelBase {
           })
         }
         if (kind === 'text') {
-          const v =
+          const edit = editOf(key, c)
+          const base =
             key === 'emp'
-              ? c.emp + ' employees'
+              ? String(c.emp)
               : key === 'loc'
                 ? c.loc
                 : key === 'gap'
                   ? c.gap
                   : c.last
+          const raw = edit !== undefined ? edit : base
+          const v = key === 'emp' ? raw + ' employees' : raw
           return Object.assign(cell('x', c, i), {
             isText: true,
             value: v,
@@ -1421,7 +1462,7 @@ class WorkspaceModel extends ModelBase {
                 ? (e) => {
                     this.stop(e)
                     this.flash(
-                      c.name + ': ' + c.gap + ' — no unified layer across CRM, engagement and data',
+                      c.name + ': ' + raw + ' — no unified layer across CRM, engagement and data',
                     )
                   }
                 : () => {},
@@ -2166,12 +2207,19 @@ class WorkspaceModel extends ModelBase {
             activeView: n,
           }
         }),
-      gridCols: cols.map((c) => c[2]).join(' '),
-      tableMinWidth: cols.reduce((a, c) => a + parseInt(c[2], 10), 0) + 'px',
+      gridCols: cols.map((c) => widthFor(c)).join(' '),
+      tableMinWidth: cols.reduce((a, c) => a + parseInt(widthFor(c), 10), 0) + 'px',
       rowHeight: '34px',
+      setColWidth: this.setColWidth,
+      isEdited: (row, col) => s.cellEdits[col + '|' + row] !== undefined,
       headCells: cols.map((c) => {
         const cc = c[3] === 'custom' ? s.customCols.find((x) => 'cc:' + x.id === c[0]) : null
         return {
+          key: c[0],
+          editable:
+            c[3] === 'custom'
+              ? !!(cc && cc.cost === 0 && cc.badge === 'TXT')
+              : EDITABLE_SOURCE_COLUMNS.indexOf(c[0]) > -1,
           label: c[1],
           isCheck: c[0] === 'check',
           isAdd: c[3] === 'actions',
@@ -2354,10 +2402,14 @@ class WorkspaceModel extends ModelBase {
           selectedRows: st.selectedRows.length ? [] : rowsData.map((c) => c.name),
         })),
       rows: rowsData.map((c, i) => ({
+        name: c.name,
         cells: cellsFor(c, i),
         rowBg: s.selected === c.name ? '#FBFAFF' : '#FFFFFF',
         open: () => pick(c.name),
       })),
+      setCellEdits: this.setCellEdits,
+      noteCopied: this.noteCopied,
+      noteSkipped: this.noteSkipped,
       rowsFooter: 'Showing ' + rowsData.length + ' of 42 rows · 400 total in workspace',
       tableSearch: s.tableSearch,
       onTableSearch: (e) =>

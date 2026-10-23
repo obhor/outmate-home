@@ -1,30 +1,57 @@
 import { Fragment } from 'react'
 import { cssToObj } from '../../../../lib/css'
 import type { WorkspaceValues } from '../../types'
+import { cellText } from './gridUtils'
+import { useCellGrid } from './useCellGrid'
+import { useColumnResize } from './useColumnResize'
 
 export function CompaniesSheet({ m }: { m: WorkspaceValues }) {
   const { gridCols, headCells, openAddCol, rowHeight, rows, rowsFooter, selectAllBg, selectAllBorder, selectAllMark, tableMinWidth, toggleSelectAll } = m
+  const rowNames = (rows ?? []).map((r: any) => r.name as string)
+  const columnKeys = (headCells ?? []).map((c: any) => c.key as string)
+  const editableCols = new Set<string>(
+    (headCells ?? []).filter((c: any) => c.editable).map((c: any) => c.key as string),
+  )
+  const grid = useCellGrid({
+    rows: rowNames,
+    cols: columnKeys,
+    editableCol: (col) => editableCols.has(col),
+    onEdit: m.setCellEdits,
+    onCopy: m.noteCopied,
+    onPasteSkipped: m.noteSkipped,
+  })
+  const startResize = useColumnResize(m.setColWidth)
   return (
     <>
                             {'\n              '}
-                            <div style={cssToObj(`min-width:${tableMinWidth}`)}>
+                            <div
+                              {...grid.gridProps}
+                              style={cssToObj(`min-width:${tableMinWidth}; outline:none`)}
+                            >
                               {'\n                '}
                               <div
+                                role="row"
                                 style={cssToObj(
                                   `display:grid; grid-template-columns:${gridCols}; background:#F7F7F9; border-bottom:1px solid #E5E5EA; position:sticky; top:0; z-index:5`,
                                 )}
                               >
                                 {'\n                  '}
-                                {(headCells ?? []).map((c: any, __i: number) => (
-                                  <Fragment key={__i}>
+                                {(headCells ?? []).map((c: any, colIndex: number) => (
+                                  <Fragment key={colIndex}>
                                     {'\n                    '}
-                                    <div className="py-[7px] px-[9px] flex items-center gap-[5px] text-[10.5px] font-[650] text-[#71717A] whitespace-nowrap overflow-visible [border-right:1px_solid_#EDEDF0]">
+                                    <div
+                                      role="columnheader"
+                                      className="relative py-[7px] px-[9px] flex items-center gap-[5px] text-[10.5px] font-[650] text-[#71717A] whitespace-nowrap overflow-visible [border-right:1px_solid_#EDEDF0]"
+                                    >
                                       {'\n                      '}
                                       {c.isCheck ? (
                                         <>
                                           {'\n                        '}
                                           <span
-                                            onClick={toggleSelectAll}
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              toggleSelectAll()
+                                            }}
                                             title="Select all rows"
                                             style={cssToObj(
                                               `width:14px; height:14px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:9px; color:#FFFFFF; cursor:pointer; border:1px solid ${selectAllBorder}; background:${selectAllBg}`,
@@ -36,7 +63,14 @@ export function CompaniesSheet({ m }: { m: WorkspaceValues }) {
                                         </>
                                       ) : null}
                                       {'\n                      '}
-                                      <span className="overflow-hidden text-ellipsis">
+                                      <span
+                                        className="overflow-hidden text-ellipsis"
+                                        onClick={
+                                          c.key !== 'check' && c.key !== 'actions' && c.key !== 'num'
+                                            ? () => grid.selectColumn(c.key)
+                                            : undefined
+                                        }
+                                      >
                                         <span>{c.label}</span>
                                       </span>
                                       {'\n                      '}
@@ -129,6 +163,16 @@ export function CompaniesSheet({ m }: { m: WorkspaceValues }) {
                                           {'\n                      '}
                                         </>
                                       ) : null}
+                                      {'\n                      '}
+                                      {c.key !== 'check' && c.key !== 'actions' && c.key !== 'num' ? (
+                                        <span
+                                          onMouseDown={(e) => startResize(c.key, e)}
+                                          aria-hidden="true"
+                                          className="group absolute top-[0] right-[-3px] w-[7px] h-full flex justify-center cursor-col-resize z-[6]"
+                                        >
+                                          <span className="w-[1px] h-full bg-transparent group-hover:bg-[#C9B6F5]"></span>
+                                        </span>
+                                      ) : null}
                                       {'\n                    '}
                                     </div>
                                     {'\n                  '}
@@ -137,25 +181,53 @@ export function CompaniesSheet({ m }: { m: WorkspaceValues }) {
                                 {'\n                '}
                               </div>
                               {'\n                '}
-                              {(rows ?? []).map((r: any, __i: number) => (
-                                <Fragment key={__i}>
+                              {(rows ?? []).map((r: any, rowIndex: number) => (
+                                <Fragment key={r.name ?? rowIndex}>
                                   {'\n                  '}
                                   <div
-                                    onClick={r.open}
+                                    role="row"
                                     className="hv-udcbnc"
                                     style={cssToObj(
-                                      `display:grid; grid-template-columns:${gridCols}; border-bottom:1px solid #F1F1F3; cursor:pointer; background:${r.rowBg}`,
+                                      `display:grid; grid-template-columns:${gridCols}; border-bottom:1px solid #F1F1F3; cursor:default; background:${r.rowBg}`,
                                     )}
                                   >
                                     {'\n                    '}
-                                    {(r.cells ?? []).map((c: any, __i: number) => (
-                                      <Fragment key={__i}>
+                                    {(r.cells ?? []).map((c: any, cellIndex: number) => {
+                                      const head = (headCells ?? [])[cellIndex] ?? {}
+                                      const cellKey = (head.key as string) ?? String(cellIndex)
+                                      const activeCell = grid.isActive(r.name, cellKey)
+                                      const selectedCell = grid.isSelected(r.name, cellKey)
+                                      const editingCell = grid.isEditing(r.name, cellKey)
+                                      const editedCell = m.isEdited(r.name, cellKey)
+                                      return (
+                                      <Fragment key={cellIndex}>
                                         {'\n                      '}
                                         <div
+                                          id={grid.cellId(r.name, cellKey)}
+                                          role="gridcell"
+                                          aria-selected={selectedCell}
+                                          data-cell={`${r.name}|${cellKey}`}
+                                          data-text={cellText(c)}
+                                          onMouseDown={
+                                            cellKey === 'num'
+                                              ? (e) => grid.rowMouseDown(e, r.name)
+                                              : (e) => grid.cellMouseDown(e, r.name, cellKey)
+                                          }
+                                          onMouseEnter={() => grid.cellMouseEnter(r.name, cellKey)}
                                           style={cssToObj(
-                                            `padding:7px 9px; display:flex; align-items:center; min-width:0; gap:6px; border-right:1px solid #F4F4F6; height:${rowHeight}`,
+                                            `padding:7px 9px; display:flex; align-items:center; min-width:0; gap:6px; border-right:1px solid #F4F4F6; height:${rowHeight}; position:relative; background:${activeCell ? '#FBFAFF' : selectedCell ? '#F7F4FE' : 'transparent'}; box-shadow:${activeCell ? 'inset 0 0 0 2px #6D28D9' : editedCell ? 'inset 2px 0 0 #C9B6F5' : 'none'}`,
                                           )}
                                         >
+                                          {editingCell ? (
+                                            <input
+                                              {...grid.inputProps}
+                                              spellCheck={false}
+                                              aria-label={`Edit ${head.label ?? 'cell'}`}
+                                              style={cssToObj(
+                                                'position:absolute; inset:0; width:100%; height:100%; padding:0 8px; border:2px solid #6D28D9; outline:none; background:#FFFFFF; font-size:11.5px; color:#18181B; z-index:3',
+                                              )}
+                                            />
+                                          ) : null}
                                           {'\n\n                        '}
                                           {c.isNum ? (
                                             <>
@@ -313,6 +385,16 @@ export function CompaniesSheet({ m }: { m: WorkspaceValues }) {
                                                     {'\n                            '}
                                                   </>
                                                 ) : null}
+                                                {'\n                            '}
+                                                {c.isPlain && !c.hasVal ? (
+                                                  <>
+                                                    {'\n                              '}
+                                                    <span className="text-[11.5px] text-[#B4B4BB]">
+                                                      {'Add value'}
+                                                    </span>
+                                                    {'\n                            '}
+                                                  </>
+                                                ) : null}
                                                 {'\n                          '}
                                               </span>
                                               {'\n                        '}
@@ -388,7 +470,14 @@ export function CompaniesSheet({ m }: { m: WorkspaceValues }) {
                                                   <span>{c.logo}</span>
                                                 </span>
                                                 {'\n                            '}
-                                                <span className="text-[12px] font-[600] text-[#18181B] overflow-hidden text-ellipsis whitespace-nowrap">
+                                                <span
+                                                  onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    r.open()
+                                                  }}
+                                                  title="Open record"
+                                                  className="text-[12px] font-[600] text-[#18181B] overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer"
+                                                >
                                                   <span>{c.value}</span>
                                                 </span>
                                                 {'\n                          '}
@@ -592,7 +681,8 @@ export function CompaniesSheet({ m }: { m: WorkspaceValues }) {
                                         </div>
                                         {'\n                    '}
                                       </Fragment>
-                                    ))}
+                                      )
+                                    })}
                                     {'\n                  '}
                                   </div>
                                   {'\n                '}
