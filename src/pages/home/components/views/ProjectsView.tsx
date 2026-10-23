@@ -2,230 +2,95 @@ import { Fragment } from 'react'
 import { cssToObj } from '../../../../lib/css'
 import type { HomeValues } from '../../types'
 
+const S = cssToObj
+
 export function ProjectsView({ m }: { m: HomeValues }) {
-  const { filterMore, newResearch, onQ, projectCols, projectGrid, projectRows, projectSummary, q, sortLabel, statusChips, toggleSort } = m
+  const { filterSelects, newResearch, onQ, projectCols, projectGrid, projectRows, projectSummary, projectsEmpty, q, sortLabel, statusChips, toggleSort } = m
   return (
-    <>
-                    {'\n        '}
-                    <div className="[max-width:1120px] my-[0] mx-[auto] pt-[26px] px-[32px] pb-[56px]">
-                      {'\n          '}
-                      <div className="flex items-start justify-between gap-[16px]">
-                        {'\n            '}
-                        <div>
-                          {'\n              '}
-                          <h1 className="m-[0] text-[22px] font-[700] tracking-[-.01em]">
-                            {'Projects'}
-                          </h1>
-                          {'\n              '}
-                          <p className="mt-[6px] mx-[0] mb-[0] text-[13px] text-[#71717A]">
-                            {'Manage your GTM research workflows, datasets and enrichment runs.'}
-                          </p>
-                          {'\n            '}
-                        </div>
-                        {'\n            '}
-                        <button
-                          onClick={newResearch}
-                          className="flex-none h-[32px] py-[0] px-[13px] [border:1px_solid_#6D28D9] bg-[#6D28D9] text-[#FFFFFF] rounded-[6px] text-[12.5px] font-[650] cursor-pointer [font-family:inherit] hv-jdi8ic"
-                        >
-                          {'+ New project'}
-                        </button>
-                        {'\n          '}
-                      </div>
-                      {'\n\n          '}
-                      <div className="mt-[16px] flex [border:1px_solid_#E5E5EA] rounded-[6px] overflow-hidden">
-                        {'\n            '}
-                        {(projectSummary ?? []).map((k: any, __i: number) => (
-                          <Fragment key={__i}>
-                            {'\n              '}
-                            <div className="flex-1 py-[10px] px-[13px] [border-right:1px_solid_#EFEFF2]">
-                              {'\n                '}
-                              <div className="text-[17px] font-[700] text-[#18181B] tabular-nums">
-                                <span>{k.value}</span>
-                              </div>
-                              {'\n                '}
-                              <div className="text-[11.5px] text-[#8E8E96] mt-[2px]">
-                                <span>{k.label}</span>
-                              </div>
-                              {'\n              '}
-                            </div>
-                            {'\n            '}
-                          </Fragment>
-                        ))}
-                        {'\n          '}
-                      </div>
-                      {'\n\n          '}
-                      <div className="mt-[14px] flex items-center gap-[7px] flex-wrap">
-                        {'\n            '}
-                        <div className="flex items-center gap-[6px] h-[30px] py-[0] px-[10px] [border:1px_solid_#E4E4E8] rounded-[6px] w-[216px]">
-                          {'\n              '}
-                          <svg
-                            width="13"
-                            height="13"
-                            viewBox="0 0 20 20"
-                            fill="none"
-                            stroke="#A1A1AA"
-                            strokeWidth="1.8"
-                            className="flex-none"
-                          >
-                            <circle cx="9" cy="9" r="5.6"></circle>
-                            <path d="M13.2 13.2L17 17"></path>
-                          </svg>
-                          {'\n              '}
-                          <input
-                            onChange={onQ}
-                            value={q}
-                            placeholder="Search projects"
-                            className="[border:none] outline-none bg-transparent text-[12px] w-full [min-width:0] text-[#3F3F46] [font-family:inherit]"
-                          />
-                          {'\n            '}
-                        </div>
-                        {'\n            '}
-                        {(statusChips ?? []).map((c: any, __i: number) => (
-                          <Fragment key={__i}>
-                            {'\n              '}
-                            <span onClick={c.pick} style={cssToObj(c.style)}>
-                              <span>{c.label}</span>
-                            </span>
-                            {'\n            '}
-                          </Fragment>
-                        ))}
-                        {'\n            '}
-                        <button
-                          onClick={filterMore}
-                          className="h-[30px] py-[0] px-[11px] [border:1px_solid_#E4E4E8] bg-[#FFFFFF] rounded-[6px] text-[12px] text-[#3F3F46] font-[550] cursor-pointer [font-family:inherit]"
-                        >
-                          {'More filters'}
-                        </button>
-                        {'\n            '}
-                        <button
-                          onClick={toggleSort}
-                          className="ml-[auto] h-[30px] py-[0] px-[11px] [border:1px_solid_#E4E4E8] bg-[#FFFFFF] rounded-[6px] text-[12px] text-[#3F3F46] font-[550] cursor-pointer [font-family:inherit]"
-                        >
-                          <span>{sortLabel}</span>
-                        </button>
-                        {'\n          '}
-                      </div>
-                      {'\n\n          '}
-                      <div className="mt-[12px] [border:1px_solid_#E5E5EA] rounded-[6px] overflow-hidden">
-                        {'\n            '}
-                        <div
-                          style={cssToObj(
-                            `display:grid; grid-template-columns:${projectGrid}; background:#F7F7F9; border-bottom:1px solid #E5E5EA`,
-                          )}
-                        >
-                          {'\n              '}
-                          {(projectCols ?? []).map((c: any, __i: number) => (
-                            <Fragment key={__i}>
-                              {'\n                '}
-                              <span className="py-[8px] px-[11px] text-[11.5px] font-[650] text-[#52525B] whitespace-nowrap [border-right:1px_solid_#EDEDF0]">
-                                <span>{c}</span>
-                              </span>
-                              {'\n              '}
-                            </Fragment>
-                          ))}
-                          {'\n            '}
-                        </div>
-                        {'\n            '}
-                        {(projectRows ?? []).map((r: any, __i: number) => (
-                          <Fragment key={__i}>
-                            {'\n              '}
-                            <div
-                              onClick={r.act}
-                              className="hv-udcbnc"
-                              style={cssToObj(
-                                `display:grid; grid-template-columns:${projectGrid}; border-bottom:1px solid #F1F1F3; cursor:pointer; background:#FFFFFF; position:relative`,
-                              )}
-                            >
-                              {'\n                '}
-                              <span className="py-[10px] px-[11px] [min-width:0] [border-right:1px_solid_#F6F6F8]">
-                                {'\n                  '}
-                                <span className="block text-[12.5px] font-[650] text-[#18181B] overflow-hidden text-ellipsis whitespace-nowrap">
-                                  <span>{r.name}</span>
-                                </span>
-                                {'\n                  '}
-                                <span className="block text-[11px] text-[#A1A1AA] mt-[2px]">
-                                  <span>{r.type}</span>
-                                </span>
-                                {'\n                '}
-                              </span>
-                              {'\n                '}
-                              <span className="py-[10px] px-[11px] flex items-center [border-right:1px_solid_#F6F6F8]">
-                                <span style={cssToObj(r.statusStyle)}>
-                                  <span>{r.status}</span>
-                                </span>
-                              </span>
-                              {'\n                '}
-                              <span className="py-[10px] px-[11px] text-[12.5px] text-[#3F3F46] [border-right:1px_solid_#F6F6F8] tabular-nums">
-                                <span>{r.companies}</span>
-                              </span>
-                              {'\n                '}
-                              <span className="py-[10px] px-[11px] text-[12.5px] text-[#3F3F46] [border-right:1px_solid_#F6F6F8] tabular-nums">
-                                <span>{r.leaders}</span>
-                              </span>
-                              {'\n                '}
-                              <span className="py-[10px] px-[11px] text-[12.5px] text-[#3F3F46] [border-right:1px_solid_#F6F6F8] tabular-nums">
-                                <span>{r.signals}</span>
-                              </span>
-                              {'\n                '}
-                              <span className="py-[10px] px-[11px] text-[12.5px] text-[#3F3F46] [border-right:1px_solid_#F6F6F8] tabular-nums">
-                                <span>{r.enriched}</span>
-                              </span>
-                              {'\n                '}
-                              <span className="py-[10px] px-[11px] text-[12.5px] text-[#71717A] [border-right:1px_solid_#F6F6F8] whitespace-nowrap">
-                                <span>{r.lastRun}</span>
-                              </span>
-                              {'\n                '}
-                              <span className="py-[10px] px-[11px] text-[12.5px] text-[#3F3F46] [border-right:1px_solid_#F6F6F8] tabular-nums">
-                                <span>{r.creditsUsed}</span>
-                              </span>
-                              {'\n                '}
-                              <span className="py-[10px] px-[11px] text-[12.5px] text-[#71717A] [border-right:1px_solid_#F6F6F8] whitespace-nowrap">
-                                <span>{r.updated}</span>
-                              </span>
-                              {'\n                '}
-                              <span
-                                onClick={r.menu}
-                                title="Actions"
-                                className="flex items-center justify-center text-[#B4B4BB] text-[12px] hv-1jfh4w6"
-                              >
-                                {'•••'}
-                              </span>
-                              {'\n                '}
-                              {r.menuOpen ? (
-                                <>
-                                  {'\n                  '}
-                                  <span className="absolute top-[38px] right-[10px] w-[150px] bg-[#FFFFFF] [border:1px_solid_#E4E4E8] rounded-[7px] shadow-[0_14px_34px_rgba(24,24,27,.16)] p-[4px] z-[30] flex flex-col [animation:pop_.12s_ease-out]">
-                                    {'\n                    '}
-                                    {(r.items ?? []).map((i: any, __i: number) => (
-                                      <Fragment key={__i}>
-                                        {'\n                      '}
-                                        <span
-                                          onClick={i.act}
-                                          className="hv-u4v0t1"
-                                          style={cssToObj(
-                                            `padding:7px 8px; border-radius:5px; font-size:12px; color:${i.color}; cursor:pointer`,
-                                          )}
-                                        >
-                                          <span>{i.label}</span>
-                                        </span>
-                                        {'\n                    '}
-                                      </Fragment>
-                                    ))}
-                                    {'\n                  '}
-                                  </span>
-                                  {'\n                '}
-                                </>
-                              ) : null}
-                              {'\n              '}
-                            </div>
-                            {'\n            '}
-                          </Fragment>
-                        ))}
-                        {'\n          '}
-                      </div>
-                      {'\n        '}
-                    </div>
-                    {'\n      '}
-                  </>
+    <div style={S('max-width:1300px; margin:0 auto; padding:30px 36px 64px')}>
+      <div style={S('display:flex; align-items:flex-start; justify-content:space-between; gap:20px')}>
+        <div>
+          <h1 style={S('margin:0; font-size:24px; font-weight:700; letter-spacing:-.018em')}>Projects</h1>
+          <p style={S('margin:7px 0 0; font-size:14px; color:#71717A')}>Manage your GTM research workflows, datasets, and enrichment runs.</p>
+        </div>
+        <button onClick={newResearch} className="hv2-purple" style={S('flex:none; height:36px; padding:0 15px; border:1px solid #6D28D9; background:#6D28D9; color:#FFFFFF; border-radius:3px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit')}>+ New project</button>
+      </div>
+
+      <div style={S('margin-top:20px; display:flex; border:1px solid #E4E4E7; border-radius:3px')}>
+        {(projectSummary ?? []).map((k: any, __i: number) => (
+          <Fragment key={__i}>
+            <div style={S(k.style)}>
+              <div style={S('font-size:12px; color:#71717A; letter-spacing:.02em')}>{k.label}</div>
+              <div style={S('font-size:21px; font-weight:700; color:#18181B; font-variant-numeric:tabular-nums; margin-top:5px; letter-spacing:-.01em')}>{k.value}</div>
+            </div>
+          </Fragment>
+        ))}
+      </div>
+
+      <div style={S('margin-top:18px; display:flex; align-items:center; gap:8px; flex-wrap:wrap')}>
+        <div style={S('display:flex; align-items:center; gap:7px; height:34px; padding:0 10px; border:1px solid #E4E4E7; border-radius:3px; width:250px')}>
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#A1A1AA" strokeWidth="1.8" style={S('flex:none')}><circle cx="9" cy="9" r="5.6"></circle><path d="M13.2 13.2L17 17"></path></svg>
+          <input onChange={onQ} value={q} placeholder="Search projects" style={S('border:none; outline:none; background:transparent; font-size:13px; width:100%; min-width:0; color:#3F3F46; font-family:inherit')}></input>
+        </div>
+        {(statusChips ?? []).map((c: any, __i: number) => (
+          <Fragment key={__i}>
+            <span onClick={c.pick} style={S(c.style)}>{c.label}</span>
+          </Fragment>
+        ))}
+        {(filterSelects ?? []).map((f: any, __i: number) => (
+          <Fragment key={__i}>
+            <span onClick={f.act} className="hv2-border-soft" style={S('display:flex; align-items:center; gap:6px; height:34px; padding:0 11px; border:1px solid #E4E4E7; background:#FFFFFF; border-radius:3px; font-size:13px; color:#52525B; font-weight:500; cursor:pointer')}>
+              {f.label}
+              <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="#A1A1AA" strokeWidth="2.4"><path d="M5 8l5 5 5-5"></path></svg>
+            </span>
+          </Fragment>
+        ))}
+        <span onClick={toggleSort} className="hv2-border-soft" style={S('margin-left:auto; display:flex; align-items:center; gap:6px; height:34px; padding:0 11px; border:1px solid #E4E4E7; background:#FFFFFF; border-radius:3px; font-size:13px; color:#52525B; font-weight:500; cursor:pointer; white-space:nowrap')}>{sortLabel}</span>
+      </div>
+
+      <div style={S('margin-top:14px; border:1px solid #E4E4E7; border-radius:3px; overflow:hidden')}>
+        <div style={S(`display:grid; grid-template-columns:${projectGrid}; background:#F6F6F7; border-bottom:1px solid #E4E4E7`)}>
+          {(projectCols ?? []).map((c: any, __i: number) => (
+            <Fragment key={__i}>
+              <span style={S(c.style)}>{c.label}</span>
+            </Fragment>
+          ))}
+        </div>
+        {(projectRows ?? []).map((r: any, __i: number) => (
+          <Fragment key={__i}>
+            <div onClick={r.act} className="hv2-bg" style={S(`display:grid; grid-template-columns:${projectGrid}; border-bottom:1px solid #EFEFF0; cursor:pointer; background:#FFFFFF; position:relative; min-height:52px`)}>
+              <span style={S('padding:11px 13px; min-width:0')}>
+                <span style={S('display:block; font-size:13.5px; font-weight:600; color:#18181B; overflow:hidden; text-overflow:ellipsis; white-space:nowrap')}>{r.name}</span>
+                <span style={S('display:block; font-size:12px; color:#A1A1AA; margin-top:3px')}>{r.type}</span>
+              </span>
+              <span style={S('padding:11px 13px; display:flex; align-items:center')}><span style={S(r.statusStyle)}>{r.status}</span></span>
+              <span style={S(m.numCell)}>{r.companies}</span>
+              <span style={S(m.numCell)}>{r.leaders}</span>
+              <span style={S(m.numCell)}>{r.signals}</span>
+              <span style={S(m.numCell)}>{r.enriched}</span>
+              <span style={S(m.textCell)}>{r.lastRun}</span>
+              <span style={S(m.numCell)}>{r.creditsUsed}</span>
+              <span style={S(m.textCell)}>{r.updated}</span>
+              <span onClick={r.menu} title="Actions" className="hv2-gray" style={S('display:flex; align-items:center; justify-content:center; color:#A1A1AA; font-size:13px')}>•••</span>
+              {r.menuOpen ? (
+                <span style={S('position:absolute; top:44px; right:12px; width:170px; background:#FFFFFF; border:1px solid #D4D4D8; border-radius:3px; box-shadow:0 14px 34px rgba(24,24,27,.14); padding:4px; z-index:30; display:flex; flex-direction:column; animation:pop .12s ease-out')}>
+                  {(r.items ?? []).map((i: any, __j: number) => (
+                    <Fragment key={__j}>
+                      <span onClick={i.act} className="hv2-bg-f4" style={S(`padding:8px 9px; border-radius:2px; font-size:12.5px; color:${i.color}; cursor:pointer`)}>{i.label}</span>
+                    </Fragment>
+                  ))}
+                </span>
+              ) : null}
+            </div>
+          </Fragment>
+        ))}
+        {projectsEmpty ? (
+          <div style={S('padding:48px 24px; display:flex; flex-direction:column; align-items:center; gap:7px; background:#FCFCFC')}>
+            <div style={S('font-size:14px; font-weight:600; color:#3F3F46')}>No projects match these filters</div>
+            <div style={S('font-size:13px; color:#71717A')}>Clear the search or status filter to see all projects.</div>
+          </div>
+        ) : null}
+      </div>
+    </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useModel } from '../../lib/model'
 import styles from '../../styles/pages/home.css?raw'
 import { HomeModel } from './model'
-import { CreditsModal, EnrichmentDrawer, Toast } from './components/overlays'
+import { ColumnPanel, CreditsModal, PreviewDrawer, RunDialog, Toast } from './components/overlays'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { GenericPageView } from './components/views/GenericPageView'
@@ -19,7 +19,7 @@ export function HomePage() {
       <style>{styles}</style>
       <div
         data-page="home"
-        className="flex h-screen w-full bg-[#FFFFFF] overflow-hidden text-[13px]"
+        className="relative flex h-screen w-full bg-[#FFFFFF] overflow-hidden text-[13.5px]"
       >
         {'\n\n  '}
         <Sidebar m={m} />
@@ -46,7 +46,11 @@ export function HomePage() {
           {'\n  '}
         </div>
         {'\n\n  '}
-        {m.drawerOpen ? <EnrichmentDrawer m={m} /> : null}
+        {m.columnPanelOpen ? <ColumnPanel m={m} /> : null}
+        {'\n\n  '}
+        {m.previewOpen ? <PreviewDrawer m={m} /> : null}
+        {'\n\n  '}
+        {m.runOpen ? <RunDialog m={m} /> : null}
         {'\n\n  '}
         {m.creditsOpen ? <CreditsModal m={m} /> : null}
         {'\n\n  '}
